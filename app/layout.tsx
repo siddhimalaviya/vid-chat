@@ -1,5 +1,4 @@
 import Navbar from "@/components/layout/Navbar";
-import { cn } from "@/lib/utils";
 import SocketProvider from "@/provider/SocketProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
@@ -30,11 +29,8 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={cn(
-            geistSans.variable,
-            geistMono.variable,
-            "antialiased"
-          )}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          suppressHydrationWarning
         >
           <SocketProvider>
             <main className="flex flex-col min-h-screen bg-secondary">

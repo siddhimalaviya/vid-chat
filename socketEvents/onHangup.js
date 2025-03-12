@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 
-const onHangUp = (data) => {
+const onHangup = (data) => {
     let socketIdToEmitTo;
     if (data.ongoingCall.participants.caller.userId === data.userHangingUpId) {
         socketIdToEmitTo = data.ongoingCall.participants.receiver.socketId;
@@ -14,4 +14,4 @@ const onHangUp = (data) => {
     }
 }
 
-export default onHangUp;
+export default onHangup;

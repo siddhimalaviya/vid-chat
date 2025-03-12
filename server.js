@@ -3,7 +3,7 @@ import next from "next";
 import { Server } from "socket.io";
 import onCall from "./socketEvents/onCall.js";
 import onWebrtcSignal from "./socketEvents/onWebrtcSignal.js";
-import onHangUp from "./socketEvents/onHangUp.js";
+import onHangup from "./socketEvents/onHangup.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "192.168.29.142";
@@ -36,7 +36,7 @@ app.prepare().then(() => {
         });
         socket.on("call", onCall)
         socket.on("webrtcSignal", onWebrtcSignal)
-        socket.on("hangup", onHangUp)
+        socket.on("hangup", onHangup)
     });
 
     httpServer
