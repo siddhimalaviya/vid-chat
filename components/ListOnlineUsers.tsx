@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import Avatar from './Avatar';
 import { useState } from "react";
 import { FaVideo, FaPhone, FaComment } from "react-icons/fa";
+import DeviceDetector from "node-device-detector";
 
 const ListOnlineUsers = () => {
     const { user } = useUser();
@@ -15,25 +16,58 @@ const ListOnlineUsers = () => {
     const [localIp, setLocalIp] = useState('');
     console.log('🚀 ~ App ~ localIp:', localIp);
 
+    // useEffect(() => {
+    //     const getLocalIP = async () => {
+    //         debugger
+    //         const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
+
+    //         const pc = new RTCPeerConnection({
+    //             iceServers: [],
+    //         });
+
+    //         pc.createDataChannel('');
+
+    //         pc.createOffer().then((offer) => pc.setLocalDescription(offer));
+
+    //         pc.onicecandidate = (ice) => {
+    //             if (ice && ice.candidate && ice.candidate.candidate) {
+    //                 const ipMatch = ipRegex.exec(ice.candidate.candidate);
+    //                 if (ipMatch) {
+    //                     setLocalIp(ipMatch[0]);
+    //                     pc.onicecandidate = null;
+    //                 }
+    //             }
+    //         };
+    //     };
+
+    //     getLocalIP();
+    // }, []);
+
     useEffect(() => {
         const getLocalIP = async () => {
-            debugger
-            // const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
+            const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
 
             const pc = new RTCPeerConnection({
-                iceServers: [],
+                iceServers: [{ urls: "stun:stun.l.google.com:19302" }], // Public STUN server
             });
 
-            pc.createDataChannel('');
-
-            pc.createOffer().then((offer) => pc.setLocalDescription(offer));
-
-            pc.onicecandidate = (ice) => {
-                if (ice && ice.candidate && ice.candidate.usernameFragment) {
-                    setLocalIp(ice.candidate.usernameFragment);
-                    pc.onicecandidate = null;
+            pc.onicecandidate = (event) => {
+                if (event.candidate && event.candidate.candidate) {
+                    const ipMatch = event.candidate.candidate.match(ipRegex);
+                    if (ipMatch) {
+                        setLocalIp(ipMatch[0]); // Set the extracted IP
+                        pc.close(); // Close the connection after getting the IP
+                    }
                 }
             };
+
+            try {
+                const dataChannel = pc.createDataChannel(""); // Required to initiate connection
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+            } catch (error) {
+                console.error("Error fetching local IP:", error);
+            }
         };
 
         getLocalIP();
