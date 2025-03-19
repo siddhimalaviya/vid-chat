@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import Avatar from './Avatar';
 import { useState } from "react";
 import { FaVideo, FaPhone, FaComment } from "react-icons/fa";
+import DeviceDetector from "node-device-detector";
 
 const ListOnlineUsers = () => {
     const { user } = useUser();
@@ -16,8 +17,8 @@ const ListOnlineUsers = () => {
     console.log('🚀 ~ App ~ localIp:', localIp);
 
     // useEffect(() => {
+    //     debugger
     //     const getLocalIP = async () => {
-    //         debugger
     //         const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
 
     //         const pc = new RTCPeerConnection({
@@ -30,6 +31,8 @@ const ListOnlineUsers = () => {
 
     //         pc.onicecandidate = (ice) => {
     //             if (ice && ice.candidate && ice.candidate.candidate) {
+    //                 console.log(ice.candidate.candidate);
+
     //                 const ipMatch = ipRegex.exec(ice.candidate.candidate);
     //                 if (ipMatch) {
     //                     setLocalIp(ipMatch[0]);
@@ -42,35 +45,15 @@ const ListOnlineUsers = () => {
     //     getLocalIP();
     // }, []);
 
+    const getId = async () => {
+        const res = await fetch("https://api64.ipify.org?format=json")
+        const data = await res.json()
+        console.log("Public IP:", data.ip);
+        setLocalIp(data.ip)
+    }
     useEffect(() => {
-        const getLocalIP = async () => {
-            const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
-
-            const pc = new RTCPeerConnection({
-                iceServers: [{ urls: "stun:stun.l.google.com:19302" }], // Public STUN server
-            });
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate && event.candidate.candidate) {
-                    const ipMatch = event.candidate.candidate.match(ipRegex);
-                    if (ipMatch) {
-                        setLocalIp(ipMatch[0]); // Set the extracted IP
-                        pc.close(); // Close the connection after getting the IP
-                    }
-                }
-            };
-
-            try {
-                // const dataChannel = pc.createDataChannel(""); // Required to initiate connection
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-            } catch (error) {
-                console.error("Error fetching local IP:", error);
-            }
-        };
-
-        getLocalIP();
-    }, []);
+        getId()
+    }, [])
 
     console.log(localIp);
 
@@ -91,6 +74,7 @@ const ListOnlineUsers = () => {
     // );
     return (
         <div className="flex w-full items-center pb-2 gap-5">
+            {localIp}
             {onlineUsers?.map((onlineUser) => {
                 if (onlineUser.profile.id === user?.id) return null;
 
