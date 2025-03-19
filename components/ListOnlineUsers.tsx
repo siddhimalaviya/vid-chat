@@ -5,7 +5,6 @@ import { useUser } from '@clerk/nextjs';
 import Avatar from './Avatar';
 import { useState } from "react";
 import { FaVideo, FaPhone, FaComment } from "react-icons/fa";
-import DeviceDetector from "node-device-detector";
 
 const ListOnlineUsers = () => {
     const { user } = useUser();
@@ -19,7 +18,7 @@ const ListOnlineUsers = () => {
     useEffect(() => {
         const getLocalIP = async () => {
             debugger
-            const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
+            // const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
 
             const pc = new RTCPeerConnection({
                 iceServers: [],
