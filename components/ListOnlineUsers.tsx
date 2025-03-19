@@ -5,7 +5,6 @@ import { useUser } from '@clerk/nextjs';
 import Avatar from './Avatar';
 import { useState } from "react";
 import { FaVideo, FaPhone, FaComment } from "react-icons/fa";
-import DeviceDetector from "node-device-detector";
 
 const ListOnlineUsers = () => {
     const { user } = useUser();
@@ -62,7 +61,7 @@ const ListOnlineUsers = () => {
             };
 
             try {
-                const dataChannel = pc.createDataChannel(""); // Required to initiate connection
+                // const dataChannel = pc.createDataChannel(""); // Required to initiate connection
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
             } catch (error) {
