@@ -9,6 +9,7 @@ export type SocketUser = {
 export type OngoingCall = {
     participants: Participants;
     isRinging: boolean;
+    isAudioOnly: boolean
 }
 
 export type Participants = {

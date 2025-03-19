@@ -1,8 +1,8 @@
 import { io } from "../server.js";
 
-const onCall = (participants) => {
+const onCall = (participants, callType) => {
     if (participants.receiver.socketId) {
-        io.to(participants.receiver.socketId).emit("incomingCall", participants);
+        io.to(participants.receiver.socketId).emit("incomingCall", { participants, callType });
     }
 };
 

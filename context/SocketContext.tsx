@@ -12,7 +12,7 @@ interface iSocketContext {
     localStream: MediaStream | null;
     peers: PeerData | null;
     isCallEnded: boolean;
-    handleCall: (user: SocketUser) => void;
+    handleCall: (user: SocketUser, callType: 'video' | 'audio') => void;
     handleJoinCall: (ongoingCall: OngoingCall) => void;
     handleHangUp: (data: { ongoingCall: OngoingCall | null, isEmitHangUp: boolean }) => void;
     // handleEndCall: (callerId: string) => void;
@@ -31,21 +31,65 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
 
     const currentSocketUser = onlineUsers?.find((onlineUser) => onlineUser.userId === user?.id);
 
-    const getMediaStream = useCallback(async (faceMode?: string) => {
+    // const getMediaStream = useCallback(async (faceMode?: string) => {
+    //     if (localStream) return localStream;
+    //     try {
+    //         debugger;
+    //         const devices = await navigator.mediaDevices.enumerateDevices();
+    //         const videoDevices = devices.filter((device) => device.kind === "videoinput");
+    //         const stream = await navigator.mediaDevices.getUserMedia({
+    //             audio: true,
+    //             video: {
+    //                 width: { min: 640, ideal: 1280, max: 1920 },
+    //                 height: { min: 360, ideal: 720, max: 1080 },
+    //                 frameRate: { min: 16, ideal: 30, max: 30 },
+    //                 facingMode: videoDevices.length > 1 ? faceMode : undefined
+    //             }
+    //         });
+    //         setLocalStream(stream);
+    //         return stream;
+    //     } catch (error) {
+    //         console.log('Failed to get media stream', error);
+    //         setLocalStream(null);
+    //         return null;
+    //     }
+    // }, [localStream]);
+
+    // const handleCall = useCallback(async (user: SocketUser) => {
+    //     setIsCallEnded(false);
+    //     if (!currentSocketUser || !socket) return;
+    //     const stream = await getMediaStream();
+    //     if (!stream) {
+    //         console.log('No stream in handleCall');
+    //         return;
+    //     }
+    //     const participants = { caller: currentSocketUser, receiver: user }
+    //     setOngoingCall({
+    //         participants,
+    //         isRinging: false,
+    //         isAudioOnly: false
+    //     });
+    //     socket?.emit("call", participants);
+    // }, [socket, currentSocketUser, ongoingCall]);
+
+    const getMediaStream = useCallback(async (callType: "video" | "audio", faceMode?: string) => {
         if (localStream) return localStream;
         try {
             debugger;
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter((device) => device.kind === "videoinput");
-            const stream = await navigator.mediaDevices.getUserMedia({
+
+            const constraints = {
                 audio: true,
-                video: {
+                video: callType === "video" ? {
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 360, ideal: 720, max: 1080 },
                     frameRate: { min: 16, ideal: 30, max: 30 },
                     facingMode: videoDevices.length > 1 ? faceMode : undefined
-                }
-            });
+                } : false // Disable video for audio calls
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStream(stream);
             return stream;
         } catch (error) {
@@ -55,26 +99,57 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
         }
     }, [localStream]);
 
-    const handleCall = useCallback(async (user: SocketUser) => {
+    const handleCall = useCallback(async (user: SocketUser, callType: "video" | "audio") => {
         setIsCallEnded(false);
         if (!currentSocketUser || !socket) return;
-        const stream = await getMediaStream();
+
+        const constraints = callType === "video"
+            ? { audio: true, video: { width: 1280, height: 720 } }
+            : { audio: true, video: false }; // Only audio for audio calls
+
+        debugger
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!stream) {
-            console.log('No stream in handleCall');
+            console.log("No stream in handleCall");
             return;
         }
-        const participants = { caller: currentSocketUser, receiver: user }
+
+        setLocalStream(stream);
+
+        const participants = { caller: currentSocketUser, receiver: user };
+        setOngoingCall({ participants, isRinging: false, isAudioOnly: callType === 'audio' ? true : false });
+
+        socket?.emit("call", participants, callType);
+    }, [socket, currentSocketUser, ongoingCall]);
+
+
+    const handleAudioCall = useCallback(async (user: SocketUser) => {
+        setIsCallEnded(false);
+        if (!currentSocketUser || !socket) return;
+
+        const stream = await getMediaStream("audio");
+        if (!stream) {
+            console.log('No audio stream in handleAudioCall');
+            return;
+        }
+
+        const participants = { caller: currentSocketUser, receiver: user, callType: "audio" };
         setOngoingCall({
             participants,
-            isRinging: false
+            isRinging: false,
+            isAudioOnly: true
         });
-        socket?.emit("call", participants);
+
+        socket?.emit("audioCall", participants);
     }, [socket, currentSocketUser, ongoingCall]);
+
 
     const onIncomingCall = useCallback((participants: Participants) => {
         setOngoingCall({
             participants,
-            isRinging: true
+            isRinging: true,
+            isAudioOnly: false
+
         });
     }, [socket, user, ongoingCall]);
 
@@ -166,7 +241,7 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
             }
             return prev;
         });
-        const stream = await getMediaStream();
+        const stream = await getMediaStream('audio');
         if (!stream) {
             console.log('No stream in handleJoinCall');
             handleHangUp({ ongoingCall: ongoingCall ? ongoingCall : null, isEmitHangUp: false });
